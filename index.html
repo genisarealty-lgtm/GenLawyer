@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenLawyer — Sistema de Procesos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--azul:#185FA5;--azul-claro:#E6F1FB;--verde:#1D9E75;--verde-claro:#E1F5EE;--rojo:#A32D2D;--rojo-claro:#FCEBEB;--amarillo:#854F0B;--amarillo-claro:#FAEEDA;--gris:#5F5E5A;--gris-claro:#F1EFE8;--borde:#e2e2e0;--radio:8px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f5f5f3;color:#1a1a18;font-size:14px}
+header{background:#fff;border-bottom:1px solid var(--borde);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px}
+.logo{font-size:16px;font-weight:600;color:var(--azul)}
+.logo span{font-weight:400;color:var(--gris);font-size:13px;margin-left:8px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.main{padding:16px;max-width:1400px;margin:0 auto}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:#fff;border-radius:var(--radio);padding:12px 14px;border:1px solid var(--borde)}
+.stat-label{font-size:11px;color:var(--gris);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600}
+.stat-val.rojo{color:var(--rojo)}
+.stat-val.amarillo{color:var(--amarillo)}
+.stat-val.verde{color:var(--verde)}
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+input[type=text],select{font-size:13px;padding:7px 10px;border-radius:var(--radio);border:1px solid var(--borde);background:#fff;color:#1a1a18;font-family:inherit;outline:none}
+input[type=text]:focus,select:focus{border-color:var(--azul)}
+input[type=text]{width:220px}
+btn,button{font-family:inherit;font-size:13px;padding:7px 14px;border-radius:var(--radio);border:1px solid var(--borde);background:#fff;color:#1a1a18;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button:hover{background:#f5f5f3}
+button.primary{background:var(--azul);color:#fff;border-color:var(--azul)}
+button.primary:hover{opacity:.9}
+button.success{background:var(--verde);color:#fff;border-color:var(--verde)}
+button.danger{background:var(--rojo);color:#fff;border-color:var(--rojo)}
+.table-wrap{background:#fff;border-radius:var(--radio);border:1px solid var(--borde);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:800px}
+th{background:#f9f9f7;padding:10px 12px;text-align:left;font-weight:500;font-size:12px;color:var(--gris);border-bottom:1px solid var(--borde);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f0f0ee;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px;border-radius:6px;font-weight:500;white-space:nowrap}
+.badge.rojo{background:var(--rojo-claro);color:var(--rojo)}
+.badge.amarillo{background:var(--amarillo-claro);color:var(--amarillo)}
+.badge.verde{background:var(--verde-claro);color:var(--verde)}
+.badge.gris{background:var(--gris-claro);color:var(--gris)}
+.badge.azul{background:var(--azul-claro);color:var(--azul)}
+.juzgado-activo{font-weight:500;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.radicado{font-family:monospace;font-size:11px;color:var(--gris)}
+.partes{font-size:12px;font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.partes-sub{font-size:11px;color:var(--gris);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.accion-btn{padding:4px 8px;font-size:11px;gap:4px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;border:1px solid var(--borde);padding:1.5rem;width:100%;max-width:560px;position:relative}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:1rem}
+.close-btn{position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--gris);padding:0}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;color:var(--gris);margin-bottom:4px;font-weight:500}
+.form-row input,.form-row select,.form-row textarea{width:100%;font-size:13px;padding:8px 10px;border-radius:var(--radio);border:1px solid var(--borde);font-family:inherit;background:#fff;color:#1a1a18}
+.form-row textarea{resize:vertical;min-height:60px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--borde)}
+.hist-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0ee}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:10px;height:10px;border-radius:50%;background:var(--borde);margin-top:4px;flex-shrink:0}
+.hist-dot.activo{background:var(--verde)}
+.hist-text{font-size:13px}
+.hist-sub{font-size:11px;color:var(--gris)}
+.alerta-box{background:var(--amarillo-claro);border:1px solid #EF9F27;border-radius:var(--radio);padding:10px 12px;font-size:12px;color:var(--amarillo);margin-bottom:12px}
+.empty{text-align:center;padding:3rem;color:var(--gris)}
+.sync-indicator{font-size:11px;color:var(--gris);display:flex;align-items:center;gap:4px}
+.dot-sync{width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block}
+.dot-sync.online{background:var(--verde)}
+.dot-sync.saving{background:var(--amarillo)}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a18;color:#fff;padding:10px 16px;border-radius:var(--radio);font-size:13px;z-index:999;display:none;max-width:300px}
+.seccion-titulo{font-size:11px;font-weight:600;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px;background:#f9f9f7;border-bottom:1px solid var(--borde)}
+@media(max-width:600px){
+  .form-grid{grid-template-columns:1fr}
+  input[type=text]{width:100%}
+  .main{padding:10px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">GenLawyer <span>Sistema de Procesos</span></div>
+  </div>
+  <div class="header-actions">
+    <div class="sync-indicator"><span class="dot-sync" id="sync-dot"></span><span id="sync-label">Conectando...</span></div>
+    <button class="primary" onclick="abrirNuevo()">+ Nuevo proceso</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="stats" id="stats-bar"></div>
+
+  <div class="filters">
+    <input type="text" id="busq" placeholder="Radicado, partes, juzgado..." oninput="renderTabla()">
+    <select id="f-etapa" onchange="renderTabla()">
+      <option value="">Todas las etapas</option>
+      <option>Primera instancia</option>
+      <option>Apelación</option>
+      <option>Ejecución</option>
+      <option>Casación</option>
+      <option>Conciliación</option>
+    </select>
+    <select id="f-tipo" onchange="renderTabla()">
+      <option value="">Todos los tipos</option>
+      <option>Civil</option>
+      <option>Laboral</option>
+      <option>Familia</option>
+      <option>Constitucional</option>
+      <option>Administrativo</option>
+    </select>
+    <select id="f-sem" onchange="renderTabla()">
+      <option value="">Todos los estados</option>
+      <option value="rojo">Urgente</option>
+      <option value="amarillo">Próximo</option>
+      <option value="verde">Al día</option>
+      <option value="gris">Sin fecha</option>
+    </select>
+    <select id="f-resp" onchange="renderTabla()">
+      <option value="">Todos los responsables</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:120px">Radicado</th>
+          <th style="width:160px">Partes</th>
+          <th style="width:190px">Juzgado activo</th>
+          <th style="width:100px">Etapa</th>
+          <th style="width:110px">Próx. término</th>
+          <th style="width:75px">Estado</th>
+          <th style="width:90px">Responsable</th>
+          <th style="width:90px">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal nuevo/editar -->
+<div class="overlay" id="modal-proc">
+  <div class="modal">
+    <button class="close-btn" onclick="cerrar('modal-proc')">×</button>
+    <h3 id="modal-proc-titulo">Registrar proceso</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Radicado</label><input id="f-radicado" placeholder="2025-00190-00"></div>
+      <div class="form-row"><label>Tipo</label>
+        <select id="f-tipo2"><option>Civil</option><option>Laboral</option><option>Familia</option><option>Constitucional</option><option>Administrativo</option></select>
+      </div>
+    </div>
+    <div class="form-row"><label>Demandante</label><input id="f-demandante" placeholder="Nombre o razón social"></div>
+    <div class="form-row"><label>Demandado</label><input id="f-demandado" placeholder="Nombre o razón social"></div>
+    <div class="form-row"><label>Juzgado activo (competencia HOY)</label><input id="f-juzgado" placeholder="Juzgado 01 Civil del Circuito de..."></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Etapa actual</label>
+        <select id="f-etapa2"><option>Primera instancia</option><option>Apelación</option><option>Ejecución</option><option>Casación</option><option>Conciliación</option></select>
+      </div>
+      <div class="form-row"><label>Responsable</label><input id="f-resp2" placeholder="Abogado asignado"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Próximo término</label><input type="date" id="f-termino"></div>
+      <div class="form-row"><label>Descripción del término</label><input id="f-termino-desc" placeholder="Ej: Traslado del recurso"></div>
+    </div>
+    <div class="form-row"><label>Observaciones</label><textarea id="f-obs" placeholder="Notas relevantes..."></textarea></div>
+    <div class="modal-footer">
+      <button onclick="cerrar('modal-proc')">Cancelar</button>
+      <button class="primary" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal detalle -->
+<div class="overlay" id="modal-det">
+  <div class="modal" style="max-width:600px">
+    <button class="close-btn" onclick="cerrar('modal-det')">×</button>
+    <div id="det-contenido"></div>
+  </div>
+</div>
+
+<!-- Modal cambio etapa -->
+<div class="overlay" id="modal-etapa">
+  <div class="modal" style="max-width:420px">
+    <button class="close-btn" onclick="cerrar('modal-etapa')">×</button>
+    <h3>Cambiar etapa / juzgado</h3>
+    <p style="font-size:12px;color:var(--gris);margin-bottom:1rem">El juzgado anterior queda en el historial automáticamente.</p>
+    <div class="form-row"><label>Nueva etapa</label>
+      <select id="e-etapa"><option>Primera instancia</option><option>Apelación</option><option>Ejecución</option><option>Casación</option><option>Conciliación</option></select>
+    </div>
+    <div class="form-row"><label>Nuevo juzgado competente</label><input id="e-juzgado" placeholder="Tribunal / Juzgado que asume"></div>
+    <div class="form-row"><label>Motivo del cambio</label><input id="e-motivo" placeholder="Ej: Recurso de apelación admitido"></div>
+    <div class="modal-footer">
+      <button onclick="cerrar('modal-etapa')">Cancelar</button>
+      <button class="primary" onclick="confirmarEtapa()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZUkncJxT1--o1plS7QxOcmuY_Z_DyGgE",
+  authDomain: "genlawyer-cbb14.firebaseapp.com",
+  databaseURL: "https://genlawyer-cbb14-default-rtdb.firebaseio.com",
+  projectId: "genlawyer-cbb14",
+  storageBucket: "genlawyer-cbb14.firebasestorage.app",
+  messagingSenderId: "733984938185",
+  appId: "1:733984938185:web:cf3613c5c33d7074e6d518"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const procesosRef = ref(db, 'procesos');
+
+const DATOS_INICIALES = [{"id":100,"radicado":"47001315300420240002600","tipo":"Civil","demandante":"Vilma Esther Caballero Cantillo","demandado":"Eleana Maria Martinez Campos y Personas Indeterminadas","juzgadoActivo":"Juzgado 004 Civil del Circuito de Santa Marta","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Esperar octubre 20 para solicitar desistimiento tacito","obs":"[REVISAR] Esperar octubre 20 para solicitar desistimiento tacito","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 Civil del Circuito de Santa Marta","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":101,"radicado":"08001315300920220015800","tipo":"Civil","demandante":"Debbie Zulema Diaz Carbonel","demandado":"llamante en garantia Compañía Bienes y Servicios","juzgadoActivo":"Juzgado 009 Civil del Circuito de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 009 Civil del Circuito de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":102,"radicado":"0800131530092025002990","tipo":"Civil","demandante":"Jessica Castro Dager","demandado":"Jhon Jairo Batista Manotas","juzgadoActivo":"Juzgado 09 Civil del Circuito de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 09 Civil del Circuito de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":103,"radicado":"08001315301220230012300","tipo":"Civil","demandante":"Orlando Rosellon Vergara","demandado":"Ruth Maria Angulo Bustillo","juzgadoActivo":"Juzgado 012 Civil del Circuito de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Suspendido hasta diciembre","obs":"[REVISAR] Suspendido hasta diciembre","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 012 Civil del Circuito de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":104,"radicado":"08758311200120250022600","tipo":"Civil","demandante":"Pedro Bernal Cardenas","demandado":"Camilo Andres Palma Navarro","juzgadoActivo":"Juzgado 01 civil del circuito de soledad","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 01 civil del circuito de soledad","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":105,"radicado":"13836318900220190006700","tipo":"Civil","demandante":"Luis Hodwalker Villalba; Elvia Villalba Cantillo; Erna Villalba Hodwalker","demandado":"Marcela Villalba Florez; Aura Villalba Florez","juzgadoActivo":"Tribunal superior civil Magistrada Diana Patricia Martinez Cudris","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"En Apelación","obs":"[REVISAR] En Apelación","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 Civil del Circuito de Turbaco","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"},{"etapa":"Apelación","juzgado":"Tribunal superior civil Magistrada Diana Patricia Martinez Cudris","fecha":"2026-06-12","motivo":"En apelación — registrado desde Excel"}]},{"id":106,"radicado":"130013103005202400030-00","tipo":"Civil","demandante":"Rodrigo Valencia Bernal","demandado":"Juana Racedo de Jimenez","juzgadoActivo":"Tribunal Superior Civil Familia de Cartagena - Magistrado Osvaldo Henry Zarate Cortes","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"ACLARACIÓN Y/O HABLAR CON JUEZ","obs":"[APELACION] ACLARACIÓN Y/O HABLAR CON JUEZ","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 005 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"},{"etapa":"Apelación","juzgado":"Tribunal Superior Civil Familia de Cartagena - Magistrado Osvaldo Henry Zarate Cortes","fecha":"2026-06-12","motivo":"En apelación — registrado desde Excel"}]},{"id":107,"radicado":"13001310300120190010500","tipo":"Civil","demandante":"Jaime Garzon Serrano","demandado":"Gerardo Antonio Toro Rios","juzgadoActivo":"Juzgado 001 Civil del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulso Procesal","obs":"[IMPULSAR/REVISAR] Impulso Procesal","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":108,"radicado":"13001310300220240020900","tipo":"Civil","demandante":"Martha Watts Batista","demandado":"Jaqueline Rico Cuevas","juzgadoActivo":"Juzgado 002 Civil del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Reformar demanda; notificar demandado; resolver instrumentos publicos","obs":"[REFORMAR/REVISAR] Reformar demanda; notificar demandado; resolver instrumentos publicos","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":109,"radicado":"13001310300520210010600","tipo":"Civil","demandante":"Ernesto Jose Sierra Paralta","demandado":"Angelica Maria Villadiego Llerena","juzgadoActivo":"Juzgado 005 Civil del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar recurso de reposicion","obs":"[REVISAR/SIN PODER] Revisar recurso de reposicion","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 005 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":110,"radicado":"13001310300720190002400","tipo":"Civil","demandante":"Bancolombia S.A.","demandado":"Angelica Maria Villadiego Llerena","juzgadoActivo":"Juzgado 07 Civil del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Insistir al señor Gustavo que envie anexos y presentar escrito de nulidad","obs":"[REVISAR] Insistir al señor Gustavo que envie anexos y presentar escrito de nulidad","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 07 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":111,"radicado":"13001310300720220019900","tipo":"Civil","demandante":"Pierangelo Poli","demandado":"Restaurante el Caribe 3000 SAS; Nueva Comida Ltda; Antonio Belivacqua","juzgadoActivo":"Juzgado 07 Civil del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Pedirle a Melissa que avance","obs":"[REVISAR] Pedirle a Melissa que avance","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 07 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":112,"radicado":"13001310300920190007400","tipo":"Civil","demandante":"Alfonso Rafael Herrera","demandado":"Sigfredo; Juan; Jorge y Rodgers Mendoza; Rafael; Noemi; Elugia Rodgers Sosa","juzgadoActivo":"Juzgado 009 Civil del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Audiencia","obs":"[REVISAR] Audiencia","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 009 Civil del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":113,"radicado":"11001310301620220043100","tipo":"Civil","demandante":"Diana Sofia Rey Vasquez","demandado":"Johana Bernal Farfan","juzgadoActivo":"Juzgado 016 Civil del Circuito de Bogotá","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[REVISAR] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 016 Civil del Circuito de Bogotá","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":114,"radicado":"PENDIENTE-VERIFICAR","tipo":"Civil","demandante":"Maryuris Isabel Portacio Rivas","demandado":"Hipolito Rodriguez Rodriguez; franklin Rodriguez Rodriguez; Ana isabel ducuara","juzgadoActivo":"Juzgado 036 Civil Circuito de Bogota","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"PENDIENTE","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 036 Civil Circuito de Bogota","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}],"alerta":"Sin radicado — verificar en Litigio Virtual"},{"id":115,"radicado":"23555318900120250005500","tipo":"Civil","demandante":"Claribel Cruz Oyola","demandado":"Manuel Domingo Sanchez Arias","juzgadoActivo":"Juzgado promiscuo del circuito de planeta rica","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[Revisar] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado promiscuo del circuito de planeta rica","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":116,"radicado":"13001400300220230059300","tipo":"Civil","demandante":"Ruben Beltran","demandado":"Centro Comercial Getsemaní","juzgadoActivo":"Juzgado 002 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Estar pendiente a notificaciones","obs":"[REVISAR] Estar pendiente a notificaciones","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":117,"radicado":"13001400300420250115900","tipo":"Civil","demandante":"Dagoberto Buelvas Cordoba","demandado":"Dagoberto Buelvas Perez","juzgadoActivo":"Juzgado 004 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":118,"radicado":"13001400300620260016100","tipo":"Civil","demandante":"Dagoberto Buelvas Cordoba","demandado":"Dagoberto Buelvas Cordoba","juzgadoActivo":"Juzgado 006 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 006 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":119,"radicado":"13001400300920260007400","tipo":"Civil","demandante":"SERGIO LUIS SÁNCHEZ RENGIFO","demandado":"","juzgadoActivo":"Juzgado 009 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 009 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":120,"radicado":"13001400300920240028400","tipo":"Civil","demandante":"Carlos Eduardo Castro Torres","demandado":"Betty Tios Velasquez","juzgadoActivo":"Juzgado 009 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"SOLICITAR AUTO DE SEGUIR ADELANTE","obs":"[REVISAR] SOLICITAR AUTO DE SEGUIR ADELANTE","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 009 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":121,"radicado":"13001400301020250054200","tipo":"Civil","demandante":"Monica Maria Duque Restrepo","demandado":"Ariel Fernando Salazar Luna","juzgadoActivo":"Juzgado 010 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulsar","obs":"[REVISAR] Impulsar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 010 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":122,"radicado":"13001400301120260000400","tipo":"Civil","demandante":"Gabriel Esteban Madrid Pernia","demandado":"Alcaldia de Cartagena - Departamento de Bolivar","juzgadoActivo":"Juzgado 011 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 011 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":123,"radicado":"13001400301220240074100","tipo":"Civil","demandante":"Eduardo Gonzales Jimenez","demandado":"Ofelia Adriana Angulo Pineda","juzgadoActivo":"Juzgado 012 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar Remate","obs":"[REVISAR] Solicitar Remate","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 012 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":124,"radicado":"13001400301320250135600","tipo":"Civil","demandante":"Oswaldo Javier Matos Alzate","demandado":"La DIAN; Alcaldia Mayor de Cartagena; Fondo de Empleados Fonrecar; Icetex","juzgadoActivo":"Juzgado 013 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 013 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":125,"radicado":"13001400301620230083300","tipo":"Civil","demandante":"Mirtha del Rosario Diaz de Gonzales","demandado":"Jairo Antonio Monsalvo Crescente","juzgadoActivo":"Juzgado 016 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar Avance","obs":"[REVISAR] Revisar Avance","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 016 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":126,"radicado":"13001400301620200004500","tipo":"Civil","demandante":"Walber Dario Rodriguez Borja","demandado":"Miriam del Socorro Castro Coronel","juzgadoActivo":"Juzgado 016 Civil Municipal de Cartagena","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"Requerir energicamente avance","obs":"[REVISAR APELACIÓN] Requerir energicamente avance","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 016 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":127,"radicado":"13001400301720240023000","tipo":"Civil","demandante":"Juan Bautista Godoy Jimenez","demandado":"Antonio Juan Coquel Tuñon y Maria Cruzarte Ramirez","juzgadoActivo":"Juzgado 017 Civil Municipal de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Realizar liquidacion del credito para noviembre","obs":"[REVISAR] Realizar liquidacion del credito para noviembre","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 017 Civil Municipal de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":128,"radicado":"08001405300720190040900","tipo":"Civil","demandante":"Ana Coronado Castro","demandado":"Alfredo Enrique Villadiego Lora","juzgadoActivo":"Juzgado 007 Civil Municipal de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[REVISAR] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 007 Civil Municipal de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":129,"radicado":"08001405300420250044000","tipo":"Civil","demandante":"Marelvis del Socorro Valle Teran","demandado":"Jarvi Antonio Bedoya Grisales y otros","juzgadoActivo":"Juzgado 004 Civil Municipal de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulsar admision de subsanación","obs":"[REVISAR] Impulsar admision de subsanación","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 Civil Municipal de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":130,"radicado":"08001405301120240094100","tipo":"Civil","demandante":"Alexandra García Ospino","demandado":"Nelsy Maugual Arrieta","juzgadoActivo":"Juzgado 011 Civil Municipal de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Requerir y visitar a juzgado","obs":"[REVISAR] Requerir y visitar a juzgado","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 011 Civil Municipal de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":131,"radicado":"08001405301520240102800","tipo":"Civil","demandante":"Nora Elena Charris Cabrera","demandado":"Flor Alba Arcon Pereira","juzgadoActivo":"Juzgado 015 Civil Municipal de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulso Procesal","obs":"[717] Impulso Procesal","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 015 Civil Municipal de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":132,"radicado":"23001400300320190047400","tipo":"Civil","demandante":"Adalberto Herrera Florez","demandado":"Pensivania Rosa Oviedo Arrieta","juzgadoActivo":"Juzgado 003 Civil Municipal de Monteria","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar Terminacion Anticipada","obs":"[REVISAR] Solicitar Terminacion Anticipada","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 003 Civil Municipal de Monteria","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":133,"radicado":"11001400300620210098000","tipo":"Civil","demandante":"Transportadora de gas","demandado":"Hermes Leonel Barrera Hernandez; HEREDEROS INDETERMINADOS DE HERMES BARRERA MARTINEZ","juzgadoActivo":"Juzgado 006 Civil Municipal de Bogotá","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[REVISAR] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 006 Civil Municipal de Bogotá","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":134,"radicado":"11001400301420230046600","tipo":"Civil","demandante":"FIDEICOMISO PATRIMONIO AUTONOMO GRAN PLAZA SOLEDAD","demandado":"JESSICA ANDREA ROZO RINCON","juzgadoActivo":"Juzgado 014 Civil Municipal de Bogotá","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Cobrar los honorarios a la entidad; Reintegrar valor $300MIL","obs":"[OMITIR/ACTIVO] Cobrar los honorarios a la entidad; Reintegrar valor $300MIL","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 014 Civil Municipal de Bogotá","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":135,"radicado":"11001400308120240044200","tipo":"Civil","demandante":"Prestezza SAS","demandado":"Inversiones Rogal SAS en Liquidacion","juzgadoActivo":"Juzgado 081 Civil Municipal de Bogotá","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Requerir que nombren curador","obs":"[REVISAR] Requerir que nombren curador","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 081 Civil Municipal de Bogotá","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":136,"radicado":"08758400300220200020000","tipo":"Civil","demandante":"Tanyha Judith Ahumada Orozco","demandado":"Javier Antonio Barrios Rico; Manuel Barros; Jesus Manuel Barros Rico","juzgadoActivo":"Juzgado 004 civil municipal de soledad","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 civil municipal de soledad","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":137,"radicado":"20443408900120240027300","tipo":"Civil","demandante":"Adalberto Inbrecht Cuenca","demandado":"Eduin Honorio Manrique Fernandez","juzgadoActivo":"Juzgado Promiscuo Municipal de Manaure Cesar","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar Estados","obs":"[REVISAR] Revisar Estados","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado Promiscuo Municipal de Manaure Cesar","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":138,"radicado":"13468318900220251004000","tipo":"Civil","demandante":"Misael Enrique Orozco Oyaga","demandado":"Empresa Social Del Estado Hospital Santa Maria de Mompox","juzgadoActivo":"Juzgado promiscuo del circuito de mompox","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado promiscuo del circuito de mompox","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":139,"radicado":"13052408900120250114100","tipo":"Civil","demandante":"Yan Carlos Escamilla Barraza; Wilner Blanco Olivo","demandado":"Roberto Jorge Buelvas Vasquez","juzgadoActivo":"Juzgado 001 promiscuo municipal de Arjona - Bolivar","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 promiscuo municipal de Arjona - Bolivar","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":140,"radicado":"23570408900120250019100","tipo":"Civil","demandante":"Juan Carlos Zuluaga Vega","demandado":"Manuel Domingo Sanchez Arias","juzgadoActivo":"Juzgado 001 promiscuo municipal de Pueblo Nuevo Cordoba","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 promiscuo municipal de Pueblo Nuevo Cordoba","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":141,"radicado":"13430408900220170030900","tipo":"Civil","demandante":"Edinson De Los Santos Murillo Daza","demandado":"Flor Ricaurte de Wilson","juzgadoActivo":"Juzgado 002 Promiscuo Municipal de Magangue","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar Sucesion Procesal","obs":"[REVISAR] Solicitar Sucesion Procesal","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 Promiscuo Municipal de Magangue","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":142,"radicado":"08001418900420240088600","tipo":"Civil","demandante":"Marelvis del Socorro Valle Teran","demandado":"Conjunto Residencial Altos de la Colina","juzgadoActivo":"Juzgado 004 de Pequeñas Causas y Competencia Múltiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar Fijar Fecha de Audiencia","obs":"[REVISAR] Solicitar Fijar Fecha de Audiencia","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 de Pequeñas Causas y Competencia Múltiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":143,"radicado":"08001418900520240009500","tipo":"Civil","demandante":"Jose Abel Doria Hernandez","demandado":"Conjunto Residencial Altos de la Colina","juzgadoActivo":"Juzgado 005 de Pequeñas Causas y Competencia Múltiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Que Tengan por Notificado al Demandado y Fecha de Audiencia","obs":"[REVISAR] Que Tengan por Notificado al Demandado y Fecha de Audiencia","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 005 de Pequeñas Causas y Competencia Múltiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":144,"radicado":"08001418900820240031900","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Nadith del Carmen Doria Escorcia","juzgadoActivo":"Juzgado 008 de Pequeñas Causas y Competencia Múltiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulsar Auto Seguir Adelante","obs":"[REVISAR] Impulsar Auto Seguir Adelante","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 008 de Pequeñas Causas y Competencia Múltiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":145,"radicado":"08001418900820231107000","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Luis Eduardo Acevedo Payares","juzgadoActivo":"Juzgado 008 de Pequeñas Causas y Competencia Múltiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar Aceptacion de la Suspensión","obs":"[REVISAR] Revisar Aceptacion de la Suspensión","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 008 de Pequeñas Causas y Competencia Múltiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":146,"radicado":"08001418900920230012660","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Jose Gregorio Cassiani Herrera","juzgadoActivo":"Juzgado 009 de Pequeñas Causas y Competencia Múltiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar Medidas Cautelares de ser Procedente","obs":"[REVISAR] Solicitar Medidas Cautelares de ser Procedente","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 009 de Pequeñas Causas y Competencia Múltiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":147,"radicado":"08001418902420250005190","tipo":"Civil","demandante":"Camilia Galeano Tobias","demandado":"Edgardo de Leon; Angela de Leon; Franquis Manjarres","juzgadoActivo":"Juzgado 024 de pequeñas causas y competencias multiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Sustituir a Maria P; Impulsar Recurso Reposicion","obs":"Sustituir a Maria P; Impulsar Recurso Reposicion","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 024 de pequeñas causas y competencias multiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":148,"radicado":"08001418902620240144900","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Maria del Socorro Marino Manga y otros","juzgadoActivo":"Juzgado 026 de Pequeñas Causas y Competencia Múltiple de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar que nombren curador en agosto","obs":"[REVISAR] Solicitar que nombren curador en agosto","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 026 de Pequeñas Causas y Competencia Múltiple de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":149,"radicado":"08758418900120240071700","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Angelica Maria Zarache Romero","juzgadoActivo":"Juzgado 001 de Pequeñas Causas y Competencia Múltiple de Soledad","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Celebrar Transaccion","obs":"[REVISAR] Celebrar Transaccion","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 de Pequeñas Causas y Competencia Múltiple de Soledad","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":150,"radicado":"08758418900120240010600","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Eber Manuel Gutierrez Morales","juzgadoActivo":"Juzgado 005 de Pequeñas Causas y Competencia Multiple de Soledad","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulsar Pendientes en el proceso","obs":"[REVISAR] Impulsar Pendientes en el proceso","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 005 de Pequeñas Causas y Competencia Multiple de Soledad","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":151,"radicado":"08758418900420240060700","tipo":"Civil","demandante":"Victor Perez Pacheco","demandado":"Edwin de Jesus Peña Castro","juzgadoActivo":"Juzgado 004 de Pequeñas Causas y Competencia Múltiple de Soledad","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulsar Auto Seguir Adelante","obs":"[REVISAR] Impulsar Auto Seguir Adelante","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 de Pequeñas Causas y Competencia Múltiple de Soledad","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":152,"radicado":"13001418900220250016500","tipo":"Civil","demandante":"Banco de Occidente","demandado":"Gabriel Esteban Madrid Pernía","juzgadoActivo":"Juzgado 002 de Pequeñas Causas y Competencia Múltiple de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 de Pequeñas Causas y Competencia Múltiple de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":153,"radicado":"13001418900420260003200","tipo":"Civil","demandante":"Luz Bertha Reyes Simanca","demandado":"Banco BBVA Colombia","juzgadoActivo":"Juzgado 004 de Pequeñas Causas y Competencia Múltiple de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 de Pequeñas Causas y Competencia Múltiple de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":154,"radicado":"11001418904320240095400","tipo":"Civil","demandante":"AECSA S.A.S.","demandado":"Diego Fernando Matos Alzate","juzgadoActivo":"Juzgado 043 de Pequeñas Causas y Competencia Múltiple de Bogota","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Audiencia","obs":"Audiencia","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 043 de Pequeñas Causas y Competencia Múltiple de Bogota","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":155,"radicado":"11001310500320220052500","tipo":"Civil","demandante":"Luis Ignacio Andrade Blanco","demandado":"Colpensiones y otros","juzgadoActivo":"Tribunal superior de bogota","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 03 Laboral del Circuito de Bogota","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"},{"etapa":"Apelación","juzgado":"Tribunal superior de bogota","fecha":"2026-06-12","motivo":"En apelación — registrado desde Excel"}]},{"id":156,"radicado":"11001310501620240006000","tipo":"Laboral","demandante":"Diana Carolina Nieto Celis","demandado":"Conjunto Residencial Bosque de los Comuneros Etapa 1","juzgadoActivo":"Juzgado 016 Laboral del Circuito de Bogotá","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Impulsar con amenaza de vigilancia administrativa","obs":"[REVISAR] Impulsar con amenaza de vigilancia administrativa","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 016 Laboral del Circuito de Bogotá","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":157,"radicado":"08001310500120240006200","tipo":"Laboral","demandante":"Luis Alberto Viloria Sarmiento","demandado":"Servicios de Aseo Cafeteria y Mantenimiento Institucional Outsourcing Seasin Ltda","juzgadoActivo":"Juzgado 001 Laboral de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Solicitar Impulso","obs":"[REVISAR] Solicitar Impulso","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 Laboral de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":158,"radicado":"08001310500620190028600","tipo":"Laboral","demandante":"Gladys Maria Reyes Polo","demandado":"Fundacion Feysa","juzgadoActivo":"Juzgado 006 Laboral de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Audiencia","obs":"[REVISAR] Audiencia","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 006 Laboral de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":159,"radicado":"08001310501020220006600","tipo":"Laboral","demandante":"Maudie Rodriguez Martinez","demandado":"Instituto para el Riesgo Cardiovascular IRC IPS S.A.S","juzgadoActivo":"Juzgado 010 Laboral de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Requerir Impulso","obs":"[REVISAR] Requerir Impulso","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 010 Laboral de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":160,"radicado":"08001310501020240016100","tipo":"Civil","demandante":"Pasticceria Toscana s.a.s","demandado":"Adm Colombia de Pensiones Colpensiones","juzgadoActivo":"Tribunal Superior Sala Laboral de Barranquilla","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"Requerir para que fijen fecha audiencia","obs":"[REVISAR] Requerir para que fijen fecha audiencia","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 010 Laboral de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"},{"etapa":"Apelación","juzgado":"Tribunal Superior Sala Laboral de Barranquilla","fecha":"2026-06-12","motivo":"En apelación — registrado desde Excel"}]},{"id":161,"radicado":"13001310500820230020700","tipo":"Civil","demandante":"Osvaldo Matos Zambrano","demandado":"Adm Colombiana de Pensiones Colpensiones","juzgadoActivo":"Tribunal Superior Sala Laboral Magistrada Katalina Ramirez Villanueva","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"Pendientes alegatos de conclusión","obs":"[NO REVISAR/REVISAR LA APELACION] Pendientes alegatos de conclusión","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 008 Laboral de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"},{"etapa":"Apelación","juzgado":"Tribunal Superior Sala Laboral Magistrada Katalina Ramirez Villanueva","fecha":"2026-06-12","motivo":"En apelación — registrado desde Excel"}]},{"id":162,"radicado":"13001310500420230009200","tipo":"Civil","demandante":"Omar Cassiani Perez","demandado":"Laura Maria Noppe Piñeres - Finca Palmar del Eden","juzgadoActivo":"Tribunal Superior Sala Laboral Magistrado Carlos Francisco Garcia Salas","etapa":"Apelación","responsable":"","termino":"","terminoDesc":"Esta en Apelación","obs":"[REVISAR] Esta en Apelación","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 Laboral de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"},{"etapa":"Apelación","juzgado":"Tribunal Superior Sala Laboral Magistrado Carlos Francisco Garcia Salas","fecha":"2026-06-12","motivo":"En apelación — registrado desde Excel"}]},{"id":163,"radicado":"13001310500220240020100","tipo":"Laboral","demandante":"Maria del Carmen Cervantes Lara","demandado":"Pedro Antonio Niño; Elsa Jimenez de Niño","juzgadoActivo":"Juzgado 002 Laboral de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Reformar demanda; notificar demandado","obs":"[REVISAR] Reformar demanda; notificar demandado","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 Laboral de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":164,"radicado":"13001310500220260000700","tipo":"Laboral","demandante":"SIN DATOS","demandado":"SIN DATOS","juzgadoActivo":"Juzgado 002 Laboral de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 Laboral de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}],"alerta":"Sin demandante/demandado — verificar"},{"id":165,"radicado":"20001310500120180017700","tipo":"Laboral","demandante":"Enis Maria Mejia Avila","demandado":"Adm Colombiana de Pensiones Colpensiones","juzgadoActivo":"Juzgado 01 Laboral del Circuito de Valledupar","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 01 Laboral del Circuito de Valledupar","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":166,"radicado":"70001310500320240014000","tipo":"Laboral","demandante":"Diana Maria Vergara Molina","demandado":"Adm Colombiana de Pensiones Colpensiones","juzgadoActivo":"Juzgado 003 Laboral de Sincelejo","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Enviar constancia de notificacion","obs":"[REVISAR] Enviar constancia de notificacion","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 003 Laboral de Sincelejo","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":167,"radicado":"13001311000120250011900","tipo":"Familia","demandante":"Yojana Gonzalez Beltran","demandado":"Gustavo Jose Ramos Rios","juzgadoActivo":"Juzgado 001 de Familia de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Notificar Personalmente al Demandado","obs":"[REVISAR] Notificar Personalmente al Demandado","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 de Familia de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":168,"radicado":"13001311000220140050500","tipo":"Familia","demandante":"Mryuris Isabel Portacio Rivas","demandado":"Hipolito Rodriguez Rodriguez","juzgadoActivo":"Juzgado 002 de Familia de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Presentar Tutela","obs":"[REVISAR] Presentar Tutela","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 de Familia de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":169,"radicado":"13001311000220190051200","tipo":"Familia","demandante":"Anderson Smith Moron Cabeza","demandado":"Gelmun Dewing Moron Valdelamar","juzgadoActivo":"Juzgado 002 de Familia de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[REVISAR] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 002 de Familia de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":170,"radicado":"13001311000420130005302","tipo":"Familia","demandante":"Xamira Blanquicett Bergara","demandado":"Saul Higuera Mora","juzgadoActivo":"Juzgado 004 de Familia de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Mantener","obs":"[OMITIR/ACTIVO] Mantener","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 de Familia de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":171,"radicado":"13001311000420250062200","tipo":"Familia","demandante":"Maryuris Isabel Portacio Rivas","demandado":"Hipolito Rodriguez Rodriguez","juzgadoActivo":"Juzgado 004 de Familia de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 004 de Familia de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":172,"radicado":"08001311000120190013100","tipo":"Familia","demandante":"Oscar Santos Cabral","demandado":"Martha Lucia Marcon Carbonell Cueto","juzgadoActivo":"Juzgado 001 de Familia de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 de Familia de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":173,"radicado":"08001405300120250039800","tipo":"Familia","demandante":"Alston Bryan Calderon Dugand y HNS","demandado":"Indeterminados","juzgadoActivo":"Juzgado 001 de Familia de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Retirar","obs":"Retirar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 de Familia de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":174,"radicado":"08001311000120160013700","tipo":"Familia","demandante":"Jhan Carlos Altamar Castilla","demandado":"Mario Alberto Borja Medina","juzgadoActivo":"Juzgado 001 de Familia de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[REVISAR] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 de Familia de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":175,"radicado":"08001311000620250057000","tipo":"Familia","demandante":"Jessica Castro Dager","demandado":"Jhon Jairo Batista Manotas","juzgadoActivo":"Juzgado 006 de Familia de Barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 006 de Familia de Barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":176,"radicado":"23001311000120250011200","tipo":"Familia","demandante":"Sergio Luis Sanchez Rengifo","demandado":"Causante Dolores Maria Rengifo Rengifo; Manuel Sanchez Arias","juzgadoActivo":"Juzgado 001 de Familia del Circuito de Montería","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar Expediente digital","obs":"[REVISAR] Revisar Expediente digital","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 001 de Familia del Circuito de Montería","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":177,"radicado":"13001333300620220009500","tipo":"Administrativo","demandante":"sociedad de ingenieros y arquitectos de bolivar","demandado":"Edurbe S.A","juzgadoActivo":"Juzgado 006 Administrativo del Circuito de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"Revisar","obs":"[REVISAR] Revisar","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 006 Administrativo del Circuito de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":178,"radicado":"13468408900220260000200","tipo":"Constitucional","demandante":"Marcos Tulio Pacheco Barrionuevo","demandado":"Alcaldia Distrital de Mompox","juzgadoActivo":"Juzgado 02 Promiscuo Municipal Mompós","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 02 Promiscuo Municipal Mompós","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":179,"radicado":"08001408801920260001700","tipo":"Constitucional","demandante":"Oscar Santos Cabral","demandado":"Mapfre Colombia Vida Seguros S.A","juzgadoActivo":"Juzgado 019 penal municipal con funcion de control de garantias barranquilla","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 019 penal municipal con funcion de control de garantias barranquilla","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]},{"id":180,"radicado":"13001310900320260000600","tipo":"Constitucional","demandante":"Vanessa del Carmen Reyes Escudero","demandado":"Juzgado 0011 Penal Municipal con Funciones de Control de garantias de Cartagena","juzgadoActivo":"Juzgado 003 Del Circuito Penal Función de Conocimiento de Cartagena","etapa":"Primera instancia","responsable":"","termino":"","terminoDesc":"","obs":"","historial":[{"etapa":"Primera instancia","juzgado":"Juzgado 003 Del Circuito Penal Función de Conocimiento de Cartagena","fecha":"2026-06-12","motivo":"Importado de control Excel 12 jun 2026"}]}]
+;
+
+let procesos = {};
+let editandoId = null;
+let cambiandoEtapaId = null;
+
+function setSyncState(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (state === 'online') { dot.className='dot-sync online'; lbl.textContent='Sincronizado'; }
+  else if (state === 'saving') { dot.className='dot-sync saving'; lbl.textContent='Guardando...'; }
+  else { dot.className='dot-sync'; lbl.textContent='Sin conexión'; }
+}
+
+function mostrarToast(msg, ms=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  setTimeout(() => t.style.display='none', ms);
+}
+
+onValue(procesosRef, snap => {
+  const val = snap.val();
+  if (val) {
+    procesos = val;
+    setSyncState('online');
+  } else {
+    // Primera vez: cargar datos iniciales
+    setSyncState('saving');
+    const batch = {};
+    DATOS_INICIALES.forEach(p => {
+      const key = 'p' + Date.now() + Math.floor(Math.random()*100000);
+      batch[key] = p;
+    });
+    set(procesosRef, batch).then(() => setSyncState('online'));
+  }
+  renderStats();
+  renderTabla();
+  actualizarFiltroResp();
+}, err => { setSyncState('offline'); console.error(err); });
+
+function semaforo(termino) {
+  if (!termino) return 'gris';
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const t = new Date(termino + 'T00:00:00');
+  const d = Math.round((t-hoy)/86400000);
+  if (d < 0) return 'rojo';
+  if (d <= 7) return 'rojo';
+  if (d <= 20) return 'amarillo';
+  return 'verde';
+}
+
+function semLabel(s) { return {rojo:'Urgente',amarillo:'Próximo',verde:'Al día',gris:'Sin fecha'}[s]||'Sin fecha'; }
+
+function diasLabel(t) {
+  if (!t) return '—';
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const f = new Date(t+'T00:00:00');
+  const d = Math.round((f-hoy)/86400000);
+  if (d<0) return `Venció hace ${Math.abs(d)}d`;
+  if (d===0) return 'Hoy';
+  return `En ${d}d`;
+}
+
+function renderStats() {
+  const lista = Object.values(procesos);
+  const total = lista.length;
+  const rojos = lista.filter(p=>semaforo(p.termino)==='rojo').length;
+  const amarillos = lista.filter(p=>semaforo(p.termino)==='amarillo').length;
+  const enApelacion = lista.filter(p=>p.etapa==='Apelación').length;
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat"><div class="stat-label">Total procesos</div><div class="stat-val">${total}</div></div>
+    <div class="stat"><div class="stat-label">Urgentes (&lt;7d)</div><div class="stat-val rojo">${rojos}</div></div>
+    <div class="stat"><div class="stat-label">Próximos (8-20d)</div><div class="stat-val amarillo">${amarillos}</div></div>
+    <div class="stat"><div class="stat-label">En apelación</div><div class="stat-val azul">${enApelacion}</div></div>
+    <div class="stat"><div class="stat-label">Al día / sin fecha</div><div class="stat-val verde">${total-rojos-amarillos}</div></div>
+  `;
+}
+
+function actualizarFiltroResp() {
+  const sel = document.getElementById('f-resp');
+  const val = sel.value;
+  const resps = [...new Set(Object.values(procesos).map(p=>p.responsable).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Todos los responsables</option>' + resps.map(r=>`<option${r===val?' selected':''}>${esc(r)}</option>`).join('');
+}
+
+window.renderTabla = function() {
+  const busq = document.getElementById('busq').value.toLowerCase();
+  const fEtapa = document.getElementById('f-etapa').value;
+  const fTipo = document.getElementById('f-tipo').value;
+  const fSem = document.getElementById('f-sem').value;
+  const fResp = document.getElementById('f-resp').value;
+  let lista = Object.entries(procesos).map(([k,v])=>({...v,_key:k})).filter(p=>{
+    const txt=[p.radicado,p.demandante,p.demandado,p.juzgadoActivo,p.responsable].join(' ').toLowerCase();
+    if(busq&&!txt.includes(busq)) return false;
+    if(fEtapa&&p.etapa!==fEtapa) return false;
+    if(fTipo&&p.tipo!==fTipo) return false;
+    if(fSem&&semaforo(p.termino)!==fSem) return false;
+    if(fResp&&p.responsable!==fResp) return false;
+    return true;
+  });
+  lista.sort((a,b)=>{const s={rojo:0,amarillo:1,verde:2,gris:3};return(s[semaforo(a.termino)]||3)-(s[semaforo(b.termino)]||3);});
+  const tbody = document.getElementById('tabla-body');
+  if(!lista.length){tbody.innerHTML=`<tr><td colspan="8" class="empty">Sin resultados</td></tr>`;return;}
+  tbody.innerHTML = lista.map(p=>{
+    const sem=semaforo(p.termino);
+    return `<tr>
+      <td><div class="radicado" title="${esc(p.radicado)}">${esc(p.radicado)}</div></td>
+      <td><div class="partes">${esc(p.demandante||'—')}</div><div class="partes-sub">vs. ${esc(p.demandado||'—')}</div></td>
+      <td><div class="juzgado-activo" title="${esc(p.juzgadoActivo)}">${esc(p.juzgadoActivo)}</div></td>
+      <td><span class="badge gris">${esc(p.etapa||'—')}</span></td>
+      <td><span style="font-size:12px">${diasLabel(p.termino)}</span>${p.terminoDesc?`<div style="font-size:11px;color:var(--gris)">${esc(p.terminoDesc)}</div>`:''}</td>
+      <td><span class="badge ${sem}">${semLabel(sem)}</span></td>
+      <td style="font-size:12px">${esc(p.responsable||'—')}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="accion-btn" onclick="verDetalle('${p._key}')" title="Ver detalle">👁</button>
+          <button class="accion-btn" onclick="abrirEtapa('${p._key}')" title="Cambiar etapa">⇅</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.abrirNuevo = function() {
+  editandoId = null;
+  document.getElementById('modal-proc-titulo').textContent = 'Registrar proceso';
+  ['f-radicado','f-demandante','f-demandado','f-juzgado','f-resp2','f-termino','f-termino-desc','f-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('f-tipo2').value='Civil';
+  document.getElementById('f-etapa2').value='Primera instancia';
+  document.getElementById('modal-proc').classList.add('open');
+}
+
+window.guardar = async function() {
+  const radicado = document.getElementById('f-radicado').value.trim();
+  const juzgado = document.getElementById('f-juzgado').value.trim();
+  if(!radicado||!juzgado){alert('Radicado y juzgado activo son obligatorios.');return;}
+  const etapa = document.getElementById('f-etapa2').value;
+  const hoy = new Date().toISOString().split('T')[0];
+  setSyncState('saving');
+  if(editandoId) {
+    const p = {...procesos[editandoId]};
+    p.radicado=radicado; p.tipo=document.getElementById('f-tipo2').value;
+    p.demandante=document.getElementById('f-demandante').value.trim();
+    p.demandado=document.getElementById('f-demandado').value.trim();
+    p.juzgadoActivo=juzgado; p.etapa=etapa;
+    p.responsable=document.getElementById('f-resp2').value.trim();
+    p.termino=document.getElementById('f-termino').value;
+    p.terminoDesc=document.getElementById('f-termino-desc').value.trim();
+    p.obs=document.getElementById('f-obs').value.trim();
+    await set(ref(db,'procesos/'+editandoId), p);
+    mostrarToast('Proceso actualizado');
+  } else {
+    const nuevo = {
+      radicado, tipo:document.getElementById('f-tipo2').value,
+      demandante:document.getElementById('f-demandante').value.trim(),
+      demandado:document.getElementById('f-demandado').value.trim(),
+      juzgadoActivo:juzgado, etapa,
+      responsable:document.getElementById('f-resp2').value.trim(),
+      termino:document.getElementById('f-termino').value,
+      terminoDesc:document.getElementById('f-termino-desc').value.trim(),
+      obs:document.getElementById('f-obs').value.trim(),
+      historial:[{etapa,juzgado,fecha:hoy,motivo:'Registro manual'}]
+    };
+    await push(procesosRef, nuevo);
+    mostrarToast('Proceso registrado');
+  }
+  cerrar('modal-proc');
+  actualizarFiltroResp();
+}
+
+window.verDetalle = function(key) {
+  const p = procesos[key];
+  if(!p) return;
+  const sem = semaforo(p.termino);
+  const histHtml = (p.historial||[]).slice().reverse().map((h,i)=>`
+    <div class="hist-item">
+      <div class="hist-dot${i===0?' activo':''}"></div>
+      <div>
+        <div class="hist-text">${esc(h.etapa)} — <strong>${esc(h.juzgado)}</strong></div>
+        <div class="hist-sub">${esc(h.fecha)} · ${esc(h.motivo||'')}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('det-contenido').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:1rem">
+      <div>
+        <div style="font-family:monospace;font-size:12px;color:var(--gris);margin-bottom:2px">${esc(p.radicado)}</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:2px">${esc(p.demandante||'—')}</div>
+        <div style="font-size:13px;color:var(--gris)">vs. ${esc(p.demandado||'—')}</div>
+      </div>
+      <span class="badge ${sem}" style="flex-shrink:0">${semLabel(sem)}</span>
+    </div>
+    <div style="background:#f9f9f7;border-radius:var(--radio);padding:12px;margin-bottom:1rem">
+      <div style="font-size:11px;color:var(--gris);margin-bottom:4px">Juzgado activo (competencia actual)</div>
+      <div style="font-size:15px;font-weight:600">${esc(p.juzgadoActivo)}</div>
+      <div style="font-size:12px;color:var(--gris);margin-top:4px">Etapa: ${esc(p.etapa)} · Tipo: ${esc(p.tipo)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;font-size:13px">
+      <div><div style="font-size:11px;color:var(--gris)">Responsable</div>${esc(p.responsable||'—')}</div>
+      <div><div style="font-size:11px;color:var(--gris)">Próximo término</div>${diasLabel(p.termino)}${p.terminoDesc?' · '+esc(p.terminoDesc):''}</div>
+    </div>
+    ${p.obs?`<div style="font-size:13px;color:var(--gris);padding:10px;background:#f9f9f7;border-radius:var(--radio);margin-bottom:1rem">${esc(p.obs)}</div>`:''}
+    ${p.alerta?`<div class="alerta-box">⚠ ${esc(p.alerta)}</div>`:''}
+    <div style="border-top:1px solid var(--borde);padding-top:1rem">
+      <div style="font-size:12px;font-weight:500;color:var(--gris);margin-bottom:8px">Historial de juzgados y etapas</div>
+      ${histHtml||'<div style="font-size:13px;color:var(--gris)">Sin historial</div>'}
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="abrirEditar('${key}');cerrar('modal-det')">✏ Editar</button>
+      <button onclick="abrirEtapa('${key}');cerrar('modal-det')">⇅ Cambiar etapa</button>
+      <button class="danger" onclick="eliminar('${key}')">🗑 Eliminar</button>
+    </div>`;
+  document.getElementById('modal-det').classList.add('open');
+}
+
+window.abrirEditar = function(key) {
+  const p = procesos[key];
+  if(!p) return;
+  editandoId = key;
+  document.getElementById('modal-proc-titulo').textContent = 'Editar proceso';
+  document.getElementById('f-radicado').value = p.radicado||'';
+  document.getElementById('f-tipo2').value = p.tipo||'Civil';
+  document.getElementById('f-demandante').value = p.demandante||'';
+  document.getElementById('f-demandado').value = p.demandado||'';
+  document.getElementById('f-juzgado').value = p.juzgadoActivo||'';
+  document.getElementById('f-etapa2').value = p.etapa||'Primera instancia';
+  document.getElementById('f-resp2').value = p.responsable||'';
+  document.getElementById('f-termino').value = p.termino||'';
+  document.getElementById('f-termino-desc').value = p.terminoDesc||'';
+  document.getElementById('f-obs').value = p.obs||'';
+  document.getElementById('modal-proc').classList.add('open');
+}
+
+window.abrirEtapa = function(key) {
+  cambiandoEtapaId = key;
+  const p = procesos[key];
+  document.getElementById('e-etapa').value = p?p.etapa:'Primera instancia';
+  document.getElementById('e-juzgado').value='';
+  document.getElementById('e-motivo').value='';
+  document.getElementById('modal-etapa').classList.add('open');
+}
+
+window.confirmarEtapa = async function() {
+  const juzgado = document.getElementById('e-juzgado').value.trim();
+  const etapa = document.getElementById('e-etapa').value;
+  const motivo = document.getElementById('e-motivo').value.trim();
+  if(!juzgado){alert('El nuevo juzgado es obligatorio.');return;}
+  const p = {...procesos[cambiandoEtapaId]};
+  const hoy = new Date().toISOString().split('T')[0];
+  if(!p.historial) p.historial=[];
+  p.historial.push({etapa,juzgado,fecha:hoy,motivo:motivo||'Cambio de etapa'});
+  p.juzgadoActivo=juzgado; p.etapa=etapa;
+  setSyncState('saving');
+  await set(ref(db,'procesos/'+cambiandoEtapaId), p);
+  mostrarToast('Etapa actualizada — historial registrado');
+  cerrar('modal-etapa');
+}
+
+window.eliminar = async function(key) {
+  if(!confirm('¿Eliminar este proceso? Esta acción no se puede deshacer.')) return;
+  setSyncState('saving');
+  await remove(ref(db,'procesos/'+key));
+  mostrarToast('Proceso eliminado');
+  cerrar('modal-det');
+}
+
+window.cerrar = function(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+});
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

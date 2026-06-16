@@ -404,15 +404,56 @@ function diasLbl(t){
   return `En ${d}d`;
 }
 
+// Festivos oficiales Colombia 2026 (Ley Emiliani aplicada)
+const FESTIVOS_CO = new Set([
+  '2026-01-01', // Año Nuevo
+  '2026-01-12', // Reyes Magos (trasladado)
+  '2026-03-23', // San José (trasladado)
+  '2026-04-02', // Jueves Santo
+  '2026-04-03', // Viernes Santo
+  '2026-05-01', // Día del Trabajo
+  '2026-05-18', // Ascensión del Señor (trasladado)
+  '2026-06-08', // Corpus Christi (trasladado)
+  '2026-06-15', // Sagrado Corazón (trasladado)
+  '2026-06-29', // San Pedro y San Pablo (trasladado)
+  '2026-07-13', // Virgen de Chiquinquirá (trasladado — nuevo festivo 2026)
+  '2026-07-20', // Independencia de Colombia
+  '2026-08-07', // Batalla de Boyacá
+  '2026-08-17', // Asunción de la Virgen (trasladado)
+  '2026-10-12', // Día de la Raza (trasladado)
+  '2026-11-02', // Todos los Santos (trasladado)
+  '2026-11-16', // Independencia de Cartagena (trasladado)
+  '2026-12-08', // Inmaculada Concepción
+  '2026-12-25', // Navidad
+]);
+
+function esDiaHabil(fecha) {
+  const d = fecha.getDay(); // 0=dom, 6=sab
+  if(d === 0 || d === 6) return false;
+  const iso = fecha.toISOString().split('T')[0];
+  if(FESTIVOS_CO.has(iso)) return false;
+  return true;
+}
+
+function sumarDiasHabiles(fechaInicio, diasHabiles) {
+  // El término en notificación por estado empieza a correr al día siguiente hábil
+  const fecha = new Date(fechaInicio.getTime());
+  let contados = 0;
+  fecha.setDate(fecha.getDate() + 1); // empieza a contar desde el día siguiente
+  while(contados < diasHabiles) {
+    if(esDiaHabil(fecha)) contados++;
+    if(contados < diasHabiles) fecha.setDate(fecha.getDate() + 1);
+  }
+  return fecha;
+}
+
 function estadoSemaforo(est){
-  // Calcula semáforo basado en fecha del estado + días hábiles del término
   if(!est || !est.fechaEstado || !est.terminoDias) return null;
   if(est.actuado==='si') return 'actuado';
   const dias = parseInt(est.terminoDias)||0;
   if(!dias) return null;
-  // Aproximación: días hábiles = días * 1.4 (lun-vie)
   const fechaBase = new Date(est.fechaEstado+'T00:00:00');
-  const vencimiento = new Date(fechaBase.getTime() + dias*1.4*86400000);
+  const vencimiento = sumarDiasHabiles(fechaBase, dias);
   const n = new Date(); n.setHours(0,0,0,0);
   const diff = Math.round((vencimiento-n)/86400000);
   if(diff<0) return 'vencido';

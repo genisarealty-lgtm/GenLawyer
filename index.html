@@ -267,15 +267,31 @@ tr:hover td{background:#fafaf8}
 
 <!-- Modal: Cambio etapa -->
 <div class="overlay" id="modal-etapa">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:440px">
     <button class="close-x" onclick="cerrar('modal-etapa')">×</button>
-    <h3>Cambiar etapa / juzgado</h3>
-    <p style="font-size:12px;color:var(--gris);margin-bottom:1rem">El juzgado anterior queda en el historial automáticamente.</p>
-    <div class="fr"><label>Nueva etapa</label>
-      <select id="e-etapa"><option>Primera instancia</option><option>Apelación</option><option>Ejecución</option><option>Casación</option><option>Conciliación</option></select>
+    <h3 id="met-titulo">Gestión del proceso</h3>
+    <div class="fr">
+      <label>Tipo de acción</label>
+      <select id="e-accion" onchange="toggleEtapaAccion()">
+        <option value="etapa">Cambio de etapa o juzgado</option>
+        <option value="terminado">Proceso terminado</option>
+        <option value="poder">Terminación de poder</option>
+      </select>
     </div>
-    <div class="fr"><label>Nuevo juzgado competente</label><input id="e-juzgado" placeholder="Tribunal / Juzgado que asume"></div>
-    <div class="fr"><label>Motivo del cambio</label><input id="e-motivo" placeholder="Ej: Recurso de apelación admitido / Comisión"></div>
+    <div id="sec-etapa">
+      <p style="font-size:12px;color:var(--gris);margin-bottom:10px">El juzgado anterior queda en el historial automáticamente.</p>
+      <div class="fr"><label>Nueva etapa</label>
+        <select id="e-etapa"><option>Primera instancia</option><option>Apelación</option><option>Ejecución</option><option>Casación</option><option>Conciliación</option></select>
+      </div>
+      <div class="fr"><label>Nuevo juzgado competente</label><input id="e-juzgado" placeholder="Tribunal / Juzgado que asume"></div>
+    </div>
+    <div id="sec-term" style="display:none">
+      <div style="background:var(--amarillo-c);border:1px solid #EF9F27;border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--amarillo);margin-bottom:12px">
+        El proceso pasará al archivo. Podrás consultarlo en la pestaña <strong>Archivados</strong>.
+      </div>
+      <div class="fr"><label>Fecha de archivo</label><input type="date" id="e-fecha-arch"></div>
+    </div>
+    <div class="fr"><label id="e-motivo-label">Motivo</label><input id="e-motivo" placeholder="Ej: Recurso de apelación admitido"></div>
     <div class="mf">
       <button onclick="cerrar('modal-etapa')">Cancelar</button>
       <button class="primary" onclick="confirmarEtapa()">Confirmar</button>

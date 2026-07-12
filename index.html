@@ -275,6 +275,21 @@ tr:hover td{background:#fafaf8}
 
 <div class="toast" id="toast"></div>
 
+
+<!-- Modal: Agregar observación -->
+<div class="overlay" id="modal-obs">
+  <div class="modal" style="max-width:440px">
+    <button class="close-x" onclick="cerrar('modal-obs')">×</button>
+    <h3>Agregar observación</h3>
+    <p style="font-size:12px;color:var(--gris);margin-bottom:12px">La observación quedará registrada con tu nombre y fecha. No puede modificarse.</p>
+    <div class="fr"><label>Observación</label><textarea id="obs-texto" placeholder="Escribe la observación del proceso..." style="min-height:80px"></textarea></div>
+    <div class="mf">
+      <button onclick="cerrar('modal-obs')">Cancelar</button>
+      <button class="primary" onclick="guardarObs()">Guardar observación</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Nuevo / Editar proceso -->
 <div class="overlay" id="modal-proc">
   <div class="modal">
@@ -678,8 +693,9 @@ window.verDetalle = function(key){
       ${histHtml||'<div style="font-size:13px;color:var(--gris)">Sin historial</div>'}
     </div>
     <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
-      ${puedeEditar(p)?'<button onclick="abrirEditar(\''+key+'\');cerrar(\'modal-det\')">✏ Editar</button>':''}
-      ${puedeEditar(p)?'<button onclick="abrirEtapa(\''+key+'\');cerrar(\'modal-det\')">⇅ Cambiar etapa</button>':''}
+      ${puedeEditarProceso()?'<button onclick="abrirEditar(\''+key+'\');cerrar(\'modal-det\')">✏ Editar</button>':''}
+      ${puedeCambiarEtapa()?'<button onclick="abrirEtapa(\''+key+'\');cerrar(\'modal-det\')">⇅ Cambiar etapa</button>':''}
+      ${puedeAgregarObs()?'<button onclick="abrirAgregarObs(\''+key+'\');cerrar(\'modal-det\')">📝 Agregar observación</button>':''}
       <button onclick="abrirEstado('${key}');cerrar('modal-det')">📋 Registrar estado</button>
       ${puedeEliminar()?'<button class="danger" onclick="eliminarProceso(\''+key+'\')">🗑 Eliminar</button>':''}
     </div>`;
@@ -714,6 +730,8 @@ window.abrirEditar=function(key){
 }
 
 window.guardarProceso=async function(){
+  if(!puedeCrearProceso() && !editandoId){ toast('No tienes permiso para crear procesos.'); return; }
+  if(editandoId && !puedeEditarProceso()){ toast('No tienes permiso para editar procesos.'); return; }
   const radicado=document.getElementById('f-radicado').value.trim();
   const juzgado=document.getElementById('f-juzgado').value.trim();
   if(!radicado||!juzgado){alert('Radicado y juzgado activo son obligatorios.');return;}
@@ -749,10 +767,22 @@ window.guardarProceso=async function(){
 
 // ── Cambio etapa ──
 window.abrirEtapa=function(key){
+  if(!puedeCambiarEtapa()){ toast('No tienes permiso para cambiar etapa.'); return; }
   cambiandoEtapaId=key;
   const p=procesos[key];
+  // Restrict accion options for abogado
+  const selAccion=document.getElementById('e-accion');
+  const optTerminado=selAccion.querySelector('option[value="terminado"]');
+  const optPoder=selAccion.querySelector('option[value="poder"]');
+  if(esAbogado()){
+    if(optTerminado) optTerminado.style.display='none';
+    if(optPoder) optPoder.style.display='none';
+  } else {
+    if(optTerminado) optTerminado.style.display='';
+    if(optPoder) optPoder.style.display='';
+  }
   document.getElementById('e-accion').value='etapa';
-  document.getElementById('e-etapa').value=p?p.etapa:'Primera instancia';
+  document.getElementById('e-etapa').value='Apelación';
   document.getElementById('e-juzgado').value='';
   document.getElementById('e-motivo').value='';
   document.getElementById('e-fecha-arch').value=hoy();
@@ -772,6 +802,14 @@ window.toggleEtapaAccion=function(){
     titulo.textContent='Cambiar etapa / juzgado';
     motivoLabel.textContent='Motivo del cambio';
     motinoInput.placeholder='Ej: Recurso de apelación admitido / Comisión';
+    // Abogado solo puede seleccionar Apelación
+    const selEtapa=document.getElementById('e-etapa');
+    if(esAbogado()){
+      selEtapa.value='Apelación';
+      selEtapa.disabled=true;
+    } else {
+      selEtapa.disabled=false;
+    }
   } else if(accion==='terminado'){
     secEtapa.style.display='none'; secTerm.style.display='';
     titulo.textContent='Archivar — Proceso terminado';
@@ -860,6 +898,7 @@ window.guardarEstado=async function(){
 }
 
 window.eliminarEstado=async function(procKey,estKey){
+  if(!puedeEliminar()){ toast('Solo el administrador puede eliminar estados.'); return; }
   if(!confirm('¿Eliminar este estado electrónico?')) return;
   sync('saving');
   await remove(ref(db,`procesos/${procKey}/estados/${estKey}`));
@@ -1005,13 +1044,20 @@ function mostrarApp(user, perfil) {
   document.getElementById('btn-logout').style.display = '';
 
   // Role-based UI
-  if(currentRole === 'admin' || currentRole === 'abogado') {
+  if(puedeCrearProceso()) {
     document.getElementById('btn-nuevo').style.display = '';
   }
-  if(currentRole === 'admin') {
+  if(puedeGestionarUsuarios()) {
     document.getElementById('nav-admin').style.display = '';
     cargarUsuarios();
   }
+  // Hide archivados nav for asistente
+  const navBtns = document.querySelectorAll('.nav-btn');
+  navBtns.forEach(b => {
+    if(b.textContent.includes('Archivados') && !puedeVerArchivados()) {
+      b.style.display = 'none';
+    }
+  });
 
   // Show main app
   document.querySelector('.main').style.display = '';
@@ -1110,14 +1156,22 @@ window.irA = function(pageId, btn) {
 }
 
 // ── Permission helpers ──
-function puedeEditar(proceso) {
-  if(currentRole === 'admin') return true;
-  if(currentRole === 'abogado') return proceso.responsableUid === currentUid || proceso.responsable === '';
-  return false; // asistente no edita
-}
+function esAdmin()     { return currentRole === 'admin'; }
+function esAbogado()   { return currentRole === 'abogado'; }
+function esAsistente() { return currentRole === 'asistente'; }
 
-function puedeEliminar() { return currentRole === 'admin'; }
-function puedeRegistrarEstado() { return currentRole !== null; } // todos pueden
+function puedeCrearProceso()   { return esAdmin() || esAbogado(); }
+function puedeEditarProceso()  { return esAdmin(); }
+function puedeCambiarEtapa()   { return esAdmin() || esAbogado(); }
+function puedeCambiarEtapaAOtras() { return esAdmin(); } // solo admin puede etapas distintas a apelación
+function puedeArchivar()       { return esAdmin(); }
+function puedeEliminar()       { return esAdmin(); }
+function puedeRegistrarEstado(){ return true; } // todos pueden
+function puedeAgregarObs()     { return esAdmin() || esAbogado(); }
+function puedeEditarObs()      { return esAdmin(); }
+function puedeVerArchivados()  { return esAdmin() || esAbogado(); }
+function puedeGestionarUsuarios() { return esAdmin(); }
+function puedeEditar(p)        { return esAdmin(); } // compatibilidad
 
 // ── Role-aware renderTabla ──
 // Patch row actions based on role
@@ -1184,6 +1238,32 @@ window.eliminarUsuario = async function(uid) {
   await remove(ref(db,'usuarios/'+uid));
   toast('Usuario eliminado del registro');
   cargarUsuarios();
+}
+
+
+
+// ── Observaciones ──
+let obsProcesoId = null;
+
+window.abrirAgregarObs = function(key) {
+  obsProcesoId = key;
+  document.getElementById('obs-texto').value = '';
+  document.getElementById('modal-obs').classList.add('open');
+}
+
+window.guardarObs = async function() {
+  const texto = document.getElementById('obs-texto').value.trim();
+  if(!texto){ alert('Escribe una observación.'); return; }
+  const p = {...procesos[obsProcesoId]};
+  const obsAnterior = p.obs || '';
+  const nuevaObs = obsAnterior
+    ? obsAnterior + '\n\n[' + currentUser.displayName || 'Usuario' + ' — ' + hoy() + '] ' + texto
+    : '[' + (document.getElementById('user-name').textContent || 'Usuario') + ' — ' + hoy() + '] ' + texto;
+  p.obs = nuevaObs;
+  sync('saving');
+  await set(ref(db,'procesos/'+obsProcesoId), p);
+  toast('Observación registrada');
+  cerrar('modal-obs');
 }
 
 
